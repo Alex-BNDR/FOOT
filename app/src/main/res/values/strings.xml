@@ -1,0 +1,8 @@
+<resources>
+    <string name="app_name">FOOT5</string>
+    <string name="app_in_name">itProger</string>
+    <string name="app_name_after">Register App</string>
+    <string name="text_bottom">Ввійти в свій обліковий запис</string>
+    <string name="btnSignIn">Ввійти</string>
+    <string name="Register">Зареєструватись</string>
+</resources>
