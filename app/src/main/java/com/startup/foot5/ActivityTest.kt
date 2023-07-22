@@ -10,9 +10,12 @@ import android.widget.Button
 import android.widget.RelativeLayout
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
+import com.google.android.gms.tasks.Task
 import com.google.android.material.snackbar.Snackbar
 import com.google.firebase.FirebaseApp
+import com.google.firebase.auth.AuthResult
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.auth.FirebaseUser
 import com.google.firebase.database.DatabaseReference
 import com.google.firebase.database.FirebaseDatabase
 import com.rengwuxian.materialedittext.MaterialEditText
@@ -26,7 +29,7 @@ class ActivityTest : AppCompatActivity() {
     private lateinit var db: FirebaseDatabase
     private lateinit var binding: ActivityMainBinding
 
-    private lateinit var root : RelativeLayout
+    private lateinit var root: RelativeLayout
 
     var users: DatabaseReference? = null
 
@@ -41,15 +44,16 @@ class ActivityTest : AppCompatActivity() {
         binding = ActivityMainBinding.inflate(layoutInflater)
 
         var btnSignIn = findViewById<Button>(R.id.btnSignIn)
-        btnSignIn.setOnClickListener{ showSignInWindow() }
+        btnSignIn.setOnClickListener { showSignInWindow() }
 
         var btnRegister = findViewById<Button>(R.id.btnRegister)
-        btnRegister.setOnClickListener{ showRegisterWindow() }
+        btnRegister.setOnClickListener { showRegisterWindow() }
 
 
     }
 
     private fun showRegisterWindow() {
+
         val dialog = AlertDialog.Builder(
             (this as Context)
         )
@@ -91,22 +95,30 @@ class ActivityTest : AppCompatActivity() {
                     Snackbar.make(root!!, "Введіть ваш телефон", Snackbar.LENGTH_SHORT).show()
                     return@OnClickListener
                 }
-                auth!!.createUserWithEmailAndPassword(email.text.toString(), pass.text.toString())
-                    .addOnSuccessListener {
-                        val user = UserTest()
-                        user.email = email.text.toString()
-                        user.name = name.text.toString()
-                        user.phone = phone.text.toString()
-                        user.pass = pass.text.toString()
-                        users!!.child(user.email!!).setValue(user).addOnSuccessListener {
-                            Snackbar.make(
-                                root!!,
-                                "Користувач доданий!",
-                                Snackbar.LENGTH_SHORT
-                            ).show()
+                fun onClick() {
+                    auth!!.createUserWithEmailAndPassword(
+                        email.text.toString(),
+                        pass.text.toString()
+                    )
+                        .addOnCompleteListener {
+                            val user = UserTest()
+                            user.email = email.text.toString()
+                            user.name = name.text.toString()
+                            user.phone = phone.text.toString()
+                            user.pass = pass.text.toString()
+                            users!!.child(user.email!!).setValue(user).addOnSuccessListener {
+                                Snackbar.make(
+                                    root!!,
+                                    "Користувач доданий!",
+                                    Snackbar.LENGTH_SHORT
+                                ).show()
+                            }
+
                         }
-                    }
+                }
+
             })
+
         dialog.setNegativeButton("Відмінити") { dialogInterface, which -> dialogInterface.dismiss() }
         dialog.show()
     }
@@ -157,6 +169,7 @@ class ActivityTest : AppCompatActivity() {
                             ).show()
                         }
                     }
+
             })
         dialog.setNegativeButton("Відмінити") { dialogInterface, which -> dialogInterface.dismiss() }
         dialog.show()

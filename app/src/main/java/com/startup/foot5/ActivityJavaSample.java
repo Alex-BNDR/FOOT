@@ -21,6 +21,7 @@ import com.google.android.material.snackbar.Snackbar;
 import com.google.firebase.FirebaseApp;
 import com.google.firebase.auth.AuthResult;
 import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.rengwuxian.materialedittext.MaterialEditText;
@@ -30,6 +31,7 @@ import com.startup.foot5.R.layout;
 import com.startup.foot5.after_reg_auth.NewActivity;
 import com.startup.foot5.after_reg_auth.NewActivityJava;
 import com.startup.foot5.databinding.ActivityMainBinding;
+
 import org.jetbrains.annotations.Nullable;
 
 //import kotlin.Metadata;
@@ -53,10 +55,12 @@ public final class ActivityJavaSample extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(layout.activity_main);
 
-        FirebaseApp.initializeApp((Context)this);
+        FirebaseApp.initializeApp((Context) this);
         auth = FirebaseAuth.getInstance();
         db = FirebaseDatabase.getInstance();
         users = db.getReference("Users");
+
+        root = findViewById(id.root_element);
 
         btnRegister = findViewById(R.id.btnRegister);
         btnRegister.setOnClickListener(new View.OnClickListener() {
@@ -77,7 +81,7 @@ public final class ActivityJavaSample extends AppCompatActivity {
     }
 
     private final void showRegisterWindow() {
-        AlertDialog.Builder dialog = new AlertDialog.Builder((Context)this);
+        AlertDialog.Builder dialog = new AlertDialog.Builder((Context) this);
         dialog.setTitle("Зареєструватись");
         dialog.setMessage("Введіть всі дані для реєстрації");
 
@@ -93,44 +97,59 @@ public final class ActivityJavaSample extends AppCompatActivity {
         dialog.setPositiveButton("Прийняти", new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialogInterface, int which) {
-                if(TextUtils.isEmpty(email.getText().toString())) {
-                    Snackbar.make(root, "Введіть вашу пошту", Snackbar.LENGTH_SHORT).show();
-                    return;
-                }
-                if(TextUtils.isEmpty(pass.getText().toString())) {
-                    Snackbar.make(root, "Введіть ваш пароль", Snackbar.LENGTH_SHORT).show();
-                    return;
-                }
-                if(pass.getText().toString().length() < 5) {
-                    Snackbar.make(root, "Пароль має бути більше 5 символів", Snackbar.LENGTH_SHORT).show();
-                    return;
-                }
-                if(TextUtils.isEmpty(name.getText().toString())) {
-                    Snackbar.make(root, "Введіть ваше ім'я", Snackbar.LENGTH_SHORT).show();
-                    return;
-                }
-                if(TextUtils.isEmpty(phone.getText().toString())) {
-                    Snackbar.make(root, "Введіть ваш телефон", Snackbar.LENGTH_SHORT).show();
-                    return;
-                }
-
-                auth.createUserWithEmailAndPassword(email.getText().toString(), pass.getText().toString() ).addOnSuccessListener(new OnSuccessListener<AuthResult>() {
-                    @Override
-                    public void onSuccess(AuthResult authResult) {
-                        UserJavaSample user = new UserJavaSample();
-                        user.setEmail(email.getText().toString());
-                        user.setName(name.getText().toString());
-                        user.setPhone(phone.getText().toString());
-                        user.setPass(pass.getText().toString());
-
-                        users.child(FirebaseAuth.getInstance().getCurrentUser().getUid()).setValue(user).addOnSuccessListener(new OnSuccessListener<Void>() {
-                            @Override
-                            public void onSuccess(Void unused) {
-                                Snackbar.make(root, "Користувач доданий!", Snackbar.LENGTH_SHORT).show();
-                            }
-                        });
+                boolean emailError = false, passError = false, nameError = false, phoneError = false;
+                if (TextUtils.isEmpty(email.getText().toString()) && TextUtils.isEmpty(pass.getText().toString()) && pass.getText().toString().length() < 5 && TextUtils.isEmpty(name.getText().toString()) && TextUtils.isEmpty(phone.getText().toString())) {
+                    {Snackbar.make(root, "Ви ввели мало даних", Snackbar.LENGTH_SHORT).show();
+                        emailError = true;
+                        passError = true;
+                        nameError = true;
+                        phoneError = true;
                     }
-                });
+                }
+                else if (TextUtils.isEmpty(email.getText().toString())) {
+                    Snackbar.make(root, "Ви не ввели пошту", Snackbar.LENGTH_SHORT).show();
+                    emailError = true;
+                } else if (TextUtils.isEmpty(pass.getText().toString())) {
+                    Snackbar.make(root, "Ви не ввели пароль", Snackbar.LENGTH_SHORT).show();
+                    passError = true;
+                } else if (pass.getText().toString().length() < 5) {
+                    Snackbar.make(root, "Пароль має бути більше 5 символів", Snackbar.LENGTH_SHORT).show();
+                    passError = true;
+                } else if (TextUtils.isEmpty(name.getText().toString())) {
+                    Snackbar.make(root, "Ви не ввели ім'я", Snackbar.LENGTH_SHORT).show();
+                    nameError = true;
+
+                } else if (TextUtils.isEmpty(phone.getText().toString())) {
+                    Snackbar.make(root, "Ви не ввели телефон", Snackbar.LENGTH_SHORT).show();
+                    phoneError = true;
+
+                }
+
+                if (emailError == false && passError == false && nameError == false && phoneError == false) {
+                    auth.createUserWithEmailAndPassword(email.getText().toString(), pass.getText().toString()).addOnSuccessListener(new OnSuccessListener<AuthResult>() {
+                        @Override
+                        public void onSuccess(AuthResult authResult) {
+                            UserJavaSample user = new UserJavaSample();
+                            user.setEmail(email.getText().toString());
+                            user.setName(name.getText().toString());
+                            user.setPhone(phone.getText().toString());
+                            user.setPass(pass.getText().toString());
+
+                            startActivity(new Intent(ActivityJavaSample.this, NewActivityJava.class));
+                            finish();
+
+                            Snackbar.make(root, "Ви успішно зареєстувались", Snackbar.LENGTH_LONG).show();
+                        }
+
+                    }).addOnFailureListener(new OnFailureListener() {
+                        @Override
+                        public void onFailure(@NonNull Exception e) {
+                            Snackbar.make(root, "Помилка реєстрації. " + e.getMessage(), Snackbar.LENGTH_LONG).show();
+                        }
+                    });
+
+                }
+
             }
         });
 
@@ -143,13 +162,14 @@ public final class ActivityJavaSample extends AppCompatActivity {
 
         dialog.show();
     }
-    private void showSignInWindow() {
-        AlertDialog.Builder dialog = new AlertDialog.Builder((Context)this);
-        dialog.setTitle((CharSequence)"Ввійти");
-        dialog.setMessage((CharSequence)"Введіть дані для входу");
 
-        LayoutInflater inflater = LayoutInflater.from((Context)this);
-        View sign_in_window = inflater.inflate(R.layout.sign_in_window, (ViewGroup)null);
+    private void showSignInWindow() {
+        AlertDialog.Builder dialog = new AlertDialog.Builder((Context) this);
+        dialog.setTitle((CharSequence) "Ввійти");
+        dialog.setMessage((CharSequence) "Введіть дані для входу");
+
+        LayoutInflater inflater = LayoutInflater.from((Context) this);
+        View sign_in_window = inflater.inflate(R.layout.sign_in_window, (ViewGroup) null);
         dialog.setView(sign_in_window);
 
         MaterialEditText email = sign_in_window.findViewById(id.emailField);
@@ -158,21 +178,20 @@ public final class ActivityJavaSample extends AppCompatActivity {
         dialog.setPositiveButton("Прийняти", new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialogInterface, int which) {
-                if(TextUtils.isEmpty(email.getText().toString())) {
+                if (TextUtils.isEmpty(email.getText().toString())) {
                     Snackbar.make(root, "Введіть вашу пошту", Snackbar.LENGTH_SHORT).show();
                     return;
                 }
-                if(TextUtils.isEmpty(pass.getText().toString())) {
+                if (TextUtils.isEmpty(pass.getText().toString())) {
                     Snackbar.make(root, "Введіть ваш пароль", Snackbar.LENGTH_SHORT).show();
                     return;
                 }
-                if(pass.getText().toString().length() < 5) {
+                if (pass.getText().toString().length() < 5) {
                     Snackbar.make(root, "Пароль має бути більше 5 символів", Snackbar.LENGTH_SHORT).show();
                     return;
                 }
 
-
-                auth.signInWithEmailAndPassword(email.getText().toString(), pass.getText().toString() ).addOnSuccessListener(new OnSuccessListener<AuthResult>() {
+                auth.signInWithEmailAndPassword(email.getText().toString(), pass.getText().toString()).addOnSuccessListener(new OnSuccessListener<AuthResult>() {
                     @Override
                     public void onSuccess(AuthResult authResult) {
                         startActivity(new Intent(ActivityJavaSample.this, NewActivityJava.class));
@@ -184,7 +203,6 @@ public final class ActivityJavaSample extends AppCompatActivity {
                         Snackbar.make(root, "Помилка авторизацїї. " + e.getMessage(), Snackbar.LENGTH_SHORT).show();
                     }
                 });
-
 
             }
         });
